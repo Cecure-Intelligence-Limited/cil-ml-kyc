@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KYC Verification Frontend 🚀
 
-## Getting Started
+A modern, responsive frontend for a **Know Your Customer (KYC)** verification flow.  
+Built with **Next.js 13+ (App Router)**, **TypeScript**, and **Tailwind CSS**, this application delivers a smooth and guided process.
 
-First, run the development server:
+---
+
+## ✨ Features
+
+- **Step-by-Step Wizard** – Guided, multi-step verification flow for clarity and ease of use.
+- **ID Document Upload** – Clean, intuitive interface for submitting identity documents.
+- **Liveness Check Screen** – Uses the device’s camera to capture live images (currently a frontend simulation).
+- **Component-Based Architecture** – Clean, reusable, and scalable components.
+- **Responsive Design** – Optimized for both desktop and mobile devices.
+
+---
+
+## 🛠 Tech Stack
+
+- **Framework:** [Next.js 13+ (App Router)](https://nextjs.org/docs/app)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **State Management:** React Context API
+- **Icons:** Google Material Symbols
+
+---
+
+## 🏁 Getting Started
+
+Follow these steps to set up the project locally for development or testing.
+
+### Prerequisites
+
+- Node.js **v18+** (recommended)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <your-repository-url>
+   cd <your-repository-directory>
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+---
+
+## 🖥 Running the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app in your browser.  
+The page will auto-update as you edit code.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🤝 Collaboration Guidelines
 
-## Learn More
+We follow these practices for smooth teamwork and high code quality.
 
-To learn more about Next.js, take a look at the following resources:
+### Git Workflow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Branching:** Create feature branches; never push directly to `main` or `dev`.
+  - Format: `feature/<your-name>/<short-description>`  
+    Example: `feature/bola/liveness-ui-update`
+- **Pull Requests:** Merge all changes into **`dev`** via a PR.
+  - `main` is for production; `dev` is staging.
+- **Descriptions:** Clearly explain the "what" and "why" in PRs.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Code Quality
 
-## Deploy on Vercel
+- Run lint checks before PRs:
+  ```bash
+  npm run lint
+  ```
+- Follow the existing project structure.
+- Discuss before adding new npm packages.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📂 Project Structure
+
+```
+src/
+├── app/           # App Router pages and global layout
+├── components/    # Reusable components
+│   ├── screens/   # Step-by-step KYC flow screens
+│   └── ui/        # UI elements (icons, loaders, etc.)
+├── context/       # Global state management (React Context)
+├── hooks/         # Custom hooks
+├── services/      # API calls and client logic
+└── types/         # TypeScript type definitions
+public/            # Static assets
+```
