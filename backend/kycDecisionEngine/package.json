@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.873.0",
+    "@aws-sdk/client-rekognition": "^3.873.0",
     "@aws-sdk/client-sns": "^3.873.0"
   }
 }

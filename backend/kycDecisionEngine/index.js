@@ -1,59 +1,105 @@
-const { DynamoDBClient, PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+// backend/kycDecisionEngine/index.js
+const {
+  DynamoDBClient,
+  PutItemCommand,
+  GetItemCommand,
+} = require("@aws-sdk/client-dynamodb");
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+const {
+  RekognitionClient,
+  CompareFacesCommand,
+} = require("@aws-sdk/client-rekognition"); // New import
 
 const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
 const snsClient = new SNSClient({ region: process.env.AWS_REGION });
+const rekognitionClient = new RekognitionClient({
+  region: process.env.AWS_REGION,
+}); // New client
+
+const SIMILARITY_THRESHOLD = 99.0; // Your business rule for minimum face match confidence
 
 exports.handler = async (event) => {
-    // This function can be triggered by a DynamoDB Stream from the KycOcrData table
-    const sessionId = event.Records[0].dynamodb.Keys.sessionId.S;
-    console.log("KYCDecisionEngineLambda triggered for session:", sessionId);
+  const sessionId = event.Records[0].dynamodb.Keys.sessionId.S;
+  console.log("KYCDecisionEngineLambda triggered for session:", sessionId);
 
-    try {
-        // LIVE AWS INTEGRATION: Fetch the real data from DynamoDB
-        const ocrDataResult = await ddbClient.send(new GetItemCommand({
-            TableName: process.env.OCR_TABLE_NAME, // 'KycOcrData'
-            Key: { sessionId: { S: sessionId } },
-        }));
-        const sessionDataResult = await ddbClient.send(new GetItemCommand({
-            TableName: process.env.SESSIONS_TABLE_NAME, // 'KycSessions'
-            Key: { sessionId: { S: sessionId } },
-        }));
-        
-        let finalStatus = "REJECTED";
-        let reason = "Incomplete data.";
+  try {
+    // --- Step 1: Fetch all necessary data ---
+    const ocrDataResult = await ddbClient.send(
+      new GetItemCommand({
+        TableName: process.env.OCR_TABLE_NAME,
+        Key: { sessionId: { S: sessionId } },
+      })
+    );
+    const sessionDataResult = await ddbClient.send(
+      new GetItemCommand({
+        TableName: process.env.SESSIONS_TABLE_NAME,
+        Key: { sessionId: { S: sessionId } },
+      })
+    );
 
-        // --- Your Business Logic Goes Here ---
-        // This is where you would add more complex rules.
-        if (ocrDataResult.Item && sessionDataResult.Item?.livenessCheckStatus?.S === 'SUCCESS') {
-            finalStatus = "VERIFIED";
-            reason = "All checks passed.";
-        } else if (sessionDataResult.Item?.livenessCheckStatus?.S !== 'SUCCESS') {
-            reason = "Liveness check failed or was not completed.";
-        }
-        // --- End of Business Logic ---
+    const ocrData = ocrDataResult.Item;
+    const sessionData = sessionDataResult.Item;
 
-        const ddbParams = {
-            TableName: process.env.RESULTS_TABLE_NAME, // 'KycResults'
-            Item: {
-                sessionId: { S: sessionId },
-                finalStatus: { S: finalStatus },
-                reason: { S: reason },
-            },
-        };
-        await ddbClient.send(new PutItemCommand(ddbParams));
-
-        // LIVE AWS INTEGRATION: Publish a notification to the SNS topic
-        const snsParams = {
-            TopicArn: process.env.SNS_TOPIC_ARN,
-            Subject: `KYC Result for session ${sessionId}: ${finalStatus}`,
-            Message: `The KYC process for session ${sessionId} has completed with a status of ${finalStatus}. Reason: ${reason}.`,
-        };
-        await snsClient.send(new PublishCommand(snsParams));
-
-        console.log("Successfully processed and published final decision:", finalStatus);
-    } catch (error) {
-        console.error("Error in KYCDecisionEngineLambda:", error);
-        throw error;
+    // --- Step 2: Perform Face Comparison with Rekognition (New Step) ---
+    let faceSimilarityScore = 0;
+    if (sessionData?.livenessSelfie?.S && ocrData?.faceBoundingBox?.M) {
+      const compareFacesParams = {
+        SourceImage: {
+          S3Object: {
+            Bucket: process.env.UPLOAD_BUCKET,
+            Name: sessionData.fileName.S,
+          },
+        },
+        TargetImage: {
+          S3Object: {
+            Bucket: process.env.LIVENESS_BUCKET,
+            Name: sessionData.livenessSelfie.S,
+          },
+        },
+        SimilarityThreshold: SIMILARITY_THRESHOLD,
+      };
+      const compareFacesResponse = await rekognitionClient.send(
+        new CompareFacesCommand(compareFacesParams)
+      );
+      if (compareFacesResponse.FaceMatches.length > 0) {
+        faceSimilarityScore = compareFacesResponse.FaceMatches[0].Similarity;
+      }
     }
+
+    // --- Step 3: Apply Updated Business Logic ---
+    let finalStatus = "REJECTED";
+    let reason = "Incomplete data or checks failed.";
+
+    if (faceSimilarityScore >= SIMILARITY_THRESHOLD) {
+      finalStatus = "VERIFIED";
+      reason = "All checks passed, face match confirmed.";
+    } else {
+      reason = `Face match failed with a similarity of ${faceSimilarityScore.toFixed(
+        2
+      )}%.`;
+    }
+
+    // --- Step 4 & 5: Save Result and Notify (Same as before, but with new result) ---
+    const ddbParams = {
+      TableName: process.env.RESULTS_TABLE_NAME,
+      Item: {
+        sessionId: { S: sessionId },
+        finalStatus: { S: finalStatus },
+        reason: { S: reason },
+      },
+    };
+    await ddbClient.send(new PutItemCommand(ddbParams));
+
+    const snsParams = {
+      TopicArn: process.env.SNS_TOPIC_ARN,
+      Subject: `KYC Result: ${finalStatus}`,
+      Message: `The KYC process for session ${sessionId} completed with status: ${finalStatus}. Reason: ${reason}.`,
+    };
+    await snsClient.send(new PublishCommand(snsParams));
+
+    console.log("Successfully processed decision for session:", sessionId);
+  } catch (error) {
+    console.error("Error in KYCDecisionEngineLambda:", error);
+    throw error;
+  }
 };
