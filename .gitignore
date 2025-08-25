@@ -1,0 +1,6 @@
+# Ignore all node_modules directories
+node_modules/
+
+# You can also add other things to ignore
+.env.local
+.next/
