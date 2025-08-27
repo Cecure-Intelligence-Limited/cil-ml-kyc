@@ -1,0 +1,7 @@
+{
+  "session_id": "test-session-123",
+  "id_face_s3_key": "faces/test-session-123/id_face.jpg",
+  "liveness_reference_s3_key": "liveness-sessions/test-session-123/reference.jpg",
+  "s3_bucket": "your-kyc-bucket",
+  "similarity_threshold": 95.0
+}

@@ -1,0 +1,5 @@
+{
+  "action": "start_kyc",
+  "session_id": "test-session-123",
+  "s3_bucket": "your-kyc-bucket"
+}
