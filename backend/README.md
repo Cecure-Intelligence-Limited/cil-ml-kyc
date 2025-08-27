@@ -149,6 +149,29 @@ SIMILARITY_THRESHOLD=95.0
 
 ### Deployment Steps
 
+**Option 1: Copy-Paste into Lambda Console (Recommended)**
+
+1. **Create Lambda Functions in AWS Console**:
+   - Go to AWS Lambda Console
+   - Click "Create function"
+   - Choose "Author from scratch"
+   - Set function name (e.g., `document-processor`)
+   - Choose runtime: `Python 3.9` or `Python 3.11`
+   - Click "Create function"
+
+2. **Copy-Paste Code**:
+   - Open the function code editor
+   - Copy the entire content of the corresponding `.py` file
+   - Paste it into the Lambda code editor
+   - Click "Deploy"
+
+3. **Configure Function Settings**:
+   - Set timeout to 60 seconds
+   - Set memory to 512 MB (or higher for image processing)
+   - Configure environment variables if needed
+
+**Option 2: AWS CLI Deployment**
+
 1. **Create deployment packages**:
 ```bash
 # For each Lambda function
@@ -179,6 +202,24 @@ POST /kyc/start-session
 POST /kyc/process-document  
 POST /kyc/complete-liveness
 POST /kyc/final-verification
+```
+
+### CORS Configuration
+
+The Lambda functions include CORS headers in their responses. For API Gateway, you should also configure CORS:
+
+1. **Enable CORS in API Gateway** for each endpoint
+2. **Set allowed origins** to your frontend domain (e.g., `https://your-app.amplifyapp.com`)
+3. **Allow headers**: `Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token`
+4. **Allow methods**: `GET,POST,PUT,DELETE,OPTIONS`
+
+The Lambda functions already include these CORS headers:
+```json
+{
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS"
+}
 ```
 
 ## 📊 Data Flow

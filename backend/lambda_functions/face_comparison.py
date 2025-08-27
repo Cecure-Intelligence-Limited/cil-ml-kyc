@@ -3,7 +3,25 @@ import boto3
 import base64
 from typing import Dict, Any, Optional
 import logging
-from cors_helper import create_response
+
+# CORS Helper Functions (inline)
+def get_cors_headers():
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+    }
+
+def create_response(status_code: int, body: dict, cors_enabled: bool = True):
+    response = {
+        'statusCode': status_code,
+        'body': json.dumps(body)
+    }
+    
+    if cors_enabled:
+        response['headers'] = get_cors_headers()
+    
+    return response
 
 # Configure logging
 logger = logging.getLogger()
