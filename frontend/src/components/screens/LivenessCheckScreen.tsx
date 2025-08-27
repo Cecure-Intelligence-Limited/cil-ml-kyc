@@ -54,12 +54,12 @@ export const LivenessCheckScreen: FC = () => {
           videoRef.current.srcObject = stream;
         }
         setCameraError(null);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Camera access error:", error);
         const message =
-          error.name === "NotAllowedError"
+          error instanceof Error && error.name === "NotAllowedError"
             ? "Camera access was denied. Please enable it in your browser settings."
-            : error.message || "Could not access the camera.";
+            : error instanceof Error ? error.message : "Could not access the camera.";
         setCameraError(message);
       }
     };

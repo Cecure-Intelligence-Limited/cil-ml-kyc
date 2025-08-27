@@ -65,8 +65,8 @@ export const DocumentUploadScreen: FC = () => {
       const response = await api.uploadDocument(file, metadata);
       setVerificationData(response);
       setStep("livenessCheck");
-    } catch (error: any) {
-      const msg = error.message || "An unknown error occurred.";
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "An unknown error occurred.";
       if (msg.startsWith("PayloadTooLarge") || msg.startsWith("BadRequest")) {
         setUploadError(msg.split(": ")[1]);
       } else if (msg === "PoorImageQuality") {
