@@ -3,6 +3,7 @@ import boto3
 import uuid
 from typing import Dict, Any
 import logging
+from cors_helper import create_response
 
 # Configure logging
 logger = logging.getLogger()
@@ -57,12 +58,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         s3_bucket = event.get('s3_bucket', 'your-kyc-bucket')
         
         if not action:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'Missing required parameter: action'
-                })
-            }
+            return create_response(400, {
+                'error': 'Missing required parameter: action'
+            })
         
         if action == 'start_kyc':
             # Generate session ID
@@ -91,12 +89,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             document_type = event.get('document_type', 'passport')
             
             if not all([session_id, image_data]):
-                return {
-                    'statusCode': 400,
-                    'body': json.dumps({
-                        'error': 'Missing required parameters: session_id and image_data'
-                    })
-                }
+                return create_response(400, {
+                    'error': 'Missing required parameters: session_id and image_data'
+                })
             
             # Process document
             document_payload = {
@@ -118,12 +113,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             liveness_session_id = event.get('liveness_session_id')
             
             if not all([session_id, liveness_session_id]):
-                return {
-                    'statusCode': 400,
-                    'body': json.dumps({
-                        'error': 'Missing required parameters: session_id and liveness_session_id'
-                    })
-                }
+                return create_response(400, {
+                    'error': 'Missing required parameters: session_id and liveness_session_id'
+                })
             
             # Get liveness results
             liveness_payload = {
@@ -146,12 +138,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             liveness_reference_s3_key = event.get('liveness_reference_s3_key')
             
             if not all([session_id, id_face_s3_key, liveness_reference_s3_key]):
-                return {
-                    'statusCode': 400,
-                    'body': json.dumps({
-                        'error': 'Missing required parameters: session_id, id_face_s3_key, liveness_reference_s3_key'
-                    })
-                }
+                return create_response(400, {
+                    'error': 'Missing required parameters: session_id, id_face_s3_key, liveness_reference_s3_key'
+                })
             
             # Compare faces
             face_comparison_payload = {
@@ -173,17 +162,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             
         else:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'Invalid action. Must be "start_kyc", "process_document", "complete_liveness", or "final_verification"'
-                })
-            }
+            return create_response(400, {
+                'error': 'Invalid action. Must be "start_kyc", "process_document", "complete_liveness", or "final_verification"'
+            })
         
-        return {
-            'statusCode': 200,
-            'body': json.dumps(response_data)
-        }
+        return create_response(200, response_data)
         
     except Exception as e:
         logger.error(f"Error in KYC orchestrator: {str(e)}")

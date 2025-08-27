@@ -5,6 +5,7 @@ import io
 from PIL import Image
 from typing import Dict, Any, Optional
 import logging
+from cors_helper import create_response
 
 # Configure logging
 logger = logging.getLogger()
@@ -174,13 +175,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         image_data = event.get('image_data')
         document_type = event.get('document_type', 'passport')
         
-        if not session_id or not image_data:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'Missing required parameters: session_id and image_data'
-                })
-            }
+                if not session_id or not image_data:
+            return create_response(400, {
+                'error': 'Missing required parameters: session_id and image_data'
+            })
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)
@@ -204,17 +202,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Store results in DynamoDB or S3 for later retrieval
         # This would be implemented based on your data storage strategy
         
-        return {
-            'statusCode': 200,
-            'body': json.dumps(response_data)
-        }
+        return create_response(200, response_data)
         
     except Exception as e:
         logger.error(f"Error in document processor: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': 'Internal server error',
-                'message': str(e)
-            })
-        }
+        return create_response(500, {
+            'error': 'Internal server error',
+            'message': str(e)
+        })

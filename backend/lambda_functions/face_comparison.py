@@ -3,6 +3,7 @@ import boto3
 import base64
 from typing import Dict, Any, Optional
 import logging
+from cors_helper import create_response
 
 # Configure logging
 logger = logging.getLogger()
@@ -96,12 +97,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Validate required parameters
         if not all([session_id, id_face_s3_key, liveness_reference_s3_key]):
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'Missing required parameters: session_id, id_face_s3_key, liveness_reference_s3_key'
-                })
-            }
+            return create_response(400, {
+                'error': 'Missing required parameters: session_id, id_face_s3_key, liveness_reference_s3_key'
+            })
         
         # Download images from S3
         logger.info(f"Downloading ID face from S3: {id_face_s3_key}")
@@ -125,17 +123,11 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'status': 'COMPLETED'
         }
         
-        return {
-            'statusCode': 200,
-            'body': json.dumps(response_data)
-        }
+        return create_response(200, response_data)
         
     except Exception as e:
         logger.error(f"Error in face comparison: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': 'Internal server error',
-                'message': str(e)
-            })
-        }
+        return create_response(500, {
+            'error': 'Internal server error',
+            'message': str(e)
+        })

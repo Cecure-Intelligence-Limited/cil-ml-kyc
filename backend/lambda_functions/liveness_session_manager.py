@@ -3,6 +3,7 @@ import boto3
 import uuid
 from typing import Dict, Any
 import logging
+from cors_helper import create_response
 
 # Configure logging
 logger = logging.getLogger()
@@ -92,12 +93,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         s3_key_prefix = event.get('s3_key_prefix', 'liveness-sessions')
         
         if not action:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'Missing required parameter: action'
-                })
-            }
+            return create_response(400, {
+                'error': 'Missing required parameter: action'
+            })
         
         if action == 'create':
             # Generate session ID if not provided
@@ -116,12 +114,9 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             session_id = event.get('session_id')
             
             if not session_id:
-                return {
-                    'statusCode': 400,
-                    'body': json.dumps({
-                        'error': 'Missing required parameter: session_id for get_results action'
-                    })
-                }
+                return create_response(400, {
+                    'error': 'Missing required parameter: session_id for get_results action'
+                })
             
             # Get liveness session results
             results = get_liveness_session_results(session_id)
@@ -136,24 +131,15 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             
         else:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'Invalid action. Must be "create" or "get_results"'
-                })
-            }
+            return create_response(400, {
+                'error': 'Invalid action. Must be "create" or "get_results"'
+            })
         
-        return {
-            'statusCode': 200,
-            'body': json.dumps(response_data)
-        }
+        return create_response(200, response_data)
         
     except Exception as e:
         logger.error(f"Error in liveness session manager: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({
-                'error': 'Internal server error',
-                'message': str(e)
-            })
-        }
+        return create_response(500, {
+            'error': 'Internal server error',
+            'message': str(e)
+        })
